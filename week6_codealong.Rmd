@@ -1,0 +1,80 @@
+---
+title: "week6_codealong"
+author: "Kristin Gill"
+date: "11/9/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(palmerpenguins)
+library(ggpubr)
+library(broom)
+```
+
+# Mann-Whitney U wilcox.test()
+
+```{r}
+set.seed(1414)
+gp_1 <- sample.int(20, size = 15, replace = TRUE)
+
+set.seed(1424)
+gp_2 <- sample.int(30, size = 15, replace = TRUE)
+
+hist(gp_1)
+hist(gp_2)
+
+my_mwu <- wilcox.test(gp_1, gp_2)
+my_mwu
+```
+
+# ggplot of palmer penguins flipper length vs. body mass
+
+```{r}
+ggplot(data = penguins, aes(x = flipper_length_mm, y = body_mass_g)) +
+  geom_point()
+
+# linear model
+penguin_lm <- lm(body_mass_g ~ flipper_length_mm, data = penguins)
+summary(penguin_lm)
+
+# get the linear equation
+penguin_lm_tidy <- broom::tidy(penguin_lm)
+
+penguin_int <- penguin_lm_tidy$estimate[1]
+penguin_int
+
+penguin_coef <- penguin_lm_tidy$estimate[2]
+penguin_coef
+
+penguin_lm_out <- broom::glance(penguin_lm)
+penguin_lm_out
+```
+### Example of how to write a statement that can automatically update variables
+
+"Simple linear regression was used to explore the relationship between penguin flipper length (mm) and body mass (g) across all three penguin species, and including both male and female penguins. A significant regression model was found ($\beta$ = `r round(penguin_coef,3)`, F(`r penguin_lm_out$df`,`r penguin_lm_out$df.residual`) = `r round(penguin_lm_out$statistic,1)`, p < 0.001) with an R^2^ of `r round(penguin_lm_out$r.squared,3)`."
+
+### Explore model assumptions
+```{r}
+plot(penguin_lm)
+```
+
+## Visualize the model
+```{r}
+ggplot(data = penguins, aes(x = flipper_length_mm, y = body_mass_g)) +
+  geom_point(size = 2) +
+  geom_smooth(method = "lm",
+              color = "red",
+              size = 0.5,
+              fill = "gray10",
+              alpha = 0.5) + 
+  theme_light() +
+  ggpubr::stat_regline_equation(label.x = 180, label.y = 5700)
+
+# Pearson's r, correlation
+penguins_cor <- cor.test(penguins$flipper_length_mm, penguins$body_mass_g)
+```
+
+Here, we see that there is a strong positive correlation between penguin flipper length and body mass (*r* = `r round(penguins_cor$estimate,2)`, t(`r penguins_cor$parameter`) = `r round(penguins_cor$statistic,2)`, p < 0.001).
